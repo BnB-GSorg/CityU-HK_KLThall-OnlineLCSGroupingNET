@@ -20,6 +20,7 @@ const cancelCreateBtn = document.getElementById('cancel-create');
 const roomsGrid = document.getElementById('rooms-grid');
 const roomModal = document.getElementById('room-modal');
 const closeModal = document.querySelector('.close');
+const activityFilter = document.getElementById('activity-filter');
 
 // Sample data for demonstration
 const sampleRooms = [
@@ -87,6 +88,9 @@ function setupEventListeners() {
             hideRoomModal();
         }
     });
+    
+    // Filter
+    activityFilter.addEventListener('change', handleFilterChange);
 }
 
 function handleLogin(event) {
@@ -172,15 +176,24 @@ function handleCreateRoom(event) {
     alert('Room created successfully!');
 }
 
-function displayRooms() {
+function displayRooms(filter = 'all') {
     roomsGrid.innerHTML = '';
     
-    if (rooms.length === 0) {
-        roomsGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: #666;">No rooms available. Create one!</p>';
+    // Filter rooms based on activity type
+    let filteredRooms = rooms;
+    if (filter !== 'all') {
+        filteredRooms = rooms.filter(room => room.type === filter);
+    }
+    
+    if (filteredRooms.length === 0) {
+        const message = filter === 'all' ? 
+            'No rooms available. Create one!' : 
+            `No ${formatActivityType(filter)} activities available.`;
+        roomsGrid.innerHTML = `<p style="text-align: center; grid-column: 1/-1; color: #666;">${message}</p>`;
         return;
     }
     
-    rooms.forEach(room => {
+    filteredRooms.forEach(room => {
         const roomCard = createRoomCard(room);
         roomsGrid.appendChild(roomCard);
     });
@@ -298,6 +311,11 @@ function deleteRoom(roomId) {
             alert('Room deleted successfully.');
         }
     }
+}
+
+function handleFilterChange() {
+    const selectedFilter = activityFilter.value;
+    displayRooms(selectedFilter);
 }
 
 // Utility functions
