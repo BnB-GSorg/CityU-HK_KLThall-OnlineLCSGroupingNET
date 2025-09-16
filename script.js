@@ -289,13 +289,140 @@ function leaveRoom(roomId) {
 }
 
 function deleteRoom(roomId) {
-    if (confirm('Are you sure you want to delete this room?')) {
-        const index = rooms.findIndex(r => r.id === roomId);
-        if (index > -1) {
-            rooms.splice(index, 1);
-            displayRooms();
-            hideRoomModal();
-            alert('Room deleted successfully.');
+    showConfirmationModal(
+        'Delete Room',
+        'Are you sure you want to delete this room? This action cannot be undone.',
+        function() {
+            // Confirm callback
+            const index = rooms.findIndex(r => r.id === roomId);
+            if (index > -1) {
+                rooms.splice(index, 1);
+                displayRooms();
+                hideRoomModal();
+                alert('Room deleted successfully.');
+            }
+        },
+        function() {
+            // Cancel callback - do nothing
+        }
+    );
+}
+
+// Custom accessible confirmation modal
+function showConfirmationModal(title, message, confirmCallback, cancelCallback) {
+    // Create modal elements
+    const modal = document.createElement('div');
+    modal.className = 'confirmation-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'confirmation-title');
+    modal.setAttribute('aria-describedby', 'confirmation-message');
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'confirmation-modal-content';
+    
+    const titleElement = document.createElement('h3');
+    titleElement.id = 'confirmation-title';
+    titleElement.textContent = title;
+    
+    const messageElement = document.createElement('p');
+    messageElement.id = 'confirmation-message';
+    messageElement.textContent = message;
+    
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'confirmation-modal-buttons';
+    
+    const confirmButton = document.createElement('button');
+    confirmButton.className = 'confirm-btn';
+    confirmButton.textContent = 'Delete';
+    confirmButton.setAttribute('aria-describedby', 'confirmation-message');
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'cancel-btn';
+    cancelButton.textContent = 'Cancel';
+    
+    // Event handlers
+    confirmButton.addEventListener('click', function() {
+        hideConfirmationModal();
+        if (confirmCallback) confirmCallback();
+    });
+    
+    cancelButton.addEventListener('click', function() {
+        hideConfirmationModal();
+        if (cancelCallback) cancelCallback();
+    });
+    
+    // Keyboard event handler for accessibility
+    modal.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideConfirmationModal();
+            if (cancelCallback) cancelCallback();
+        } else if (e.key === 'Tab') {
+            // Trap focus within modal
+            trapFocus(e, [cancelButton, confirmButton]);
+        }
+    });
+    
+    // Click outside to close
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            hideConfirmationModal();
+            if (cancelCallback) cancelCallback();
+        }
+    });
+    
+    // Assemble modal
+    buttonsContainer.appendChild(cancelButton);
+    buttonsContainer.appendChild(confirmButton);
+    
+    modalContent.appendChild(titleElement);
+    modalContent.appendChild(messageElement);
+    modalContent.appendChild(buttonsContainer);
+    
+    modal.appendChild(modalContent);
+    
+    // Add to DOM
+    document.body.appendChild(modal);
+    
+    // Store reference for cleanup
+    window.currentConfirmationModal = modal;
+    
+    // Focus management
+    const previouslyFocusedElement = document.activeElement;
+    window.confirmationModalPreviousFocus = previouslyFocusedElement;
+    
+    // Focus the cancel button by default (safer option)
+    setTimeout(() => {
+        cancelButton.focus();
+    }, 10);
+}
+
+function hideConfirmationModal() {
+    if (window.currentConfirmationModal) {
+        document.body.removeChild(window.currentConfirmationModal);
+        window.currentConfirmationModal = null;
+        
+        // Restore focus to previously focused element
+        if (window.confirmationModalPreviousFocus) {
+            window.confirmationModalPreviousFocus.focus();
+            window.confirmationModalPreviousFocus = null;
+        }
+    }
+}
+
+function trapFocus(e, focusableElements) {
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    
+    if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+        }
+    } else {
+        if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
         }
     }
 }
