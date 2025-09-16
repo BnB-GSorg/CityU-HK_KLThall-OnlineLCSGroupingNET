@@ -25,6 +25,9 @@ function formatDate(date) {
 
 // Function to update current time display
 function updateCurrentTime() {
+    // Only run in browser environment
+    if (typeof document === 'undefined') return;
+    
     const now = new Date(); // Using dynamic Date() instead of hardcoded date
     const currentTimeElement = document.getElementById('current-time');
     if (currentTimeElement) {
@@ -34,6 +37,9 @@ function updateCurrentTime() {
 
 // Function to initialize page timestamps
 function initializePageTimestamps() {
+    // Only run in browser environment
+    if (typeof document === 'undefined') return;
+    
     const now = new Date(); // Using dynamic Date() instead of hardcoded date
     
     // Set session date (today)
@@ -57,6 +63,9 @@ function initializePageTimestamps() {
 
 // Function to generate sample teams with dynamic dates
 function generateTeams() {
+    // Only run in browser environment
+    if (typeof document === 'undefined') return;
+    
     const teamsContainer = document.getElementById('teams-container');
     if (!teamsContainer) return;
     
@@ -82,6 +91,9 @@ function generateTeams() {
 
 // Function to generate schedule with dynamic dates
 function generateSchedule() {
+    // Only run in browser environment
+    if (typeof document === 'undefined') return;
+    
     const scheduleContainer = document.getElementById('schedule-container');
     if (!scheduleContainer) return;
     
@@ -122,22 +134,24 @@ function refreshContent() {
     generateSchedule();
 }
 
-// Initialize everything when the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Initial load
-    refreshContent();
-    
-    // Update current time every second
-    setInterval(updateCurrentTime, 1000);
-    
-    // Refresh content every 30 seconds to show live updates
-    setInterval(function() {
-        const lastUpdatedElement = document.getElementById('last-updated');
-        if (lastUpdatedElement) {
-            lastUpdatedElement.textContent = formatDateTime(new Date());
-        }
-    }, 30000);
-});
+// Initialize everything when the page loads (browser only)
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial load
+        refreshContent();
+        
+        // Update current time every second
+        setInterval(updateCurrentTime, 1000);
+        
+        // Refresh content every 30 seconds to show live updates
+        setInterval(function() {
+            const lastUpdatedElement = document.getElementById('last-updated');
+            if (lastUpdatedElement) {
+                lastUpdatedElement.textContent = formatDateTime(new Date());
+            }
+        }, 30000);
+    });
+}
 
 // Export functions for testing (if needed)
 if (typeof module !== 'undefined' && module.exports) {
