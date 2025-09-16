@@ -30,7 +30,11 @@ const sampleRooms = [
         type: "board-games",
         host: "Alice Wang",
         location: "Library Study Room 301",
-        date: "2024-12-20",
+        date: (() => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return tomorrow.toISOString().split('T')[0];
+        })(),
         time: "14:00",
         maxParticipants: 8,
         participants: ["Alice Wang", "Bob Chen"],
@@ -42,7 +46,11 @@ const sampleRooms = [
         type: "sports",
         host: "Mike Liu",
         location: "CityU Sports Complex Court 2",
-        date: "2024-12-21",
+        date: (() => {
+            const dayAfterTomorrow = new Date();
+            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+            return dayAfterTomorrow.toISOString().split('T')[0];
+        })(),
         time: "16:30",
         maxParticipants: 10,
         participants: ["Mike Liu", "Sarah Wong", "David Lee"],
@@ -136,6 +144,14 @@ function showDashboard() {
 function showCreateRoomForm() {
     createRoomForm.classList.remove('hidden');
     hideRoomsList();
+    
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateInput = document.getElementById('date');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = tomorrow.toISOString().split('T')[0];
+    }
 }
 
 function hideCreateRoomForm() {
