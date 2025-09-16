@@ -94,6 +94,21 @@
             <!-- Room List -->
             <div id="rooms-list" class="rooms-container">
                 <h3>Available Activity Rooms</h3>
+                
+                <!-- Filter Section -->
+                <div class="filter-container">
+                    <label for="activity-filter">Filter by Activity Type:</label>
+                    <select id="activity-filter" name="activity-filter">
+                        <option value="all">All Activities</option>
+                        <option value="board-games">Board Games</option>
+                        <option value="sports">Sports</option>
+                        <option value="study-group">Study Group</option>
+                        <option value="gaming">Gaming</option>
+                        <option value="music">Music</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
                 <div id="rooms-grid" class="rooms-grid">
                     <!-- Rooms will be populated by JavaScript -->
                 </div>
