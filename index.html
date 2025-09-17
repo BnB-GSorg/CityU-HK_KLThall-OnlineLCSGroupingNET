@@ -82,7 +82,69 @@
                     </div>
                     <div class="form-group">
                         <label for="description">Description:</label>
-                        <textarea id="description" name="description" rows="3" placeholder="Additional details about the activity..."></textarea>
+                        <div id="description-editor" class="markdown-editor">
+                            <!-- Editor Tabs -->
+                            <div class="editor-tabs">
+                                <button type="button" class="tab-btn active" data-tab="write">Write</button>
+                                <button type="button" class="tab-btn" data-tab="preview">Preview</button>
+                            </div>
+                            
+                            <!-- Toolbar -->
+                            <div class="editor-toolbar" id="editor-toolbar">
+                                <button type="button" class="toolbar-btn" data-action="heading" title="Heading (Alt+H)" tabindex="-1">
+                                    <strong>H</strong>
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Alt+B)" tabindex="-1">
+                                    <strong>B</strong>
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="italic" title="Italic (Alt+I)" tabindex="-1">
+                                    <em>I</em>
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="quote" title="Quote (Alt+C)" tabindex="-1">
+                                    "
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="code" title="Code" tabindex="-1">
+                                    &lt;/&gt;
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="link" title="Link (Alt+V)" tabindex="-1">
+                                    🔗
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="unordered-list" title="Unordered List (Alt+U)" tabindex="-1">
+                                    •
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="ordered-list" title="Ordered List (Alt+O)" tabindex="-1">
+                                    1.
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="task-list" title="Task List" tabindex="-1">
+                                    ☐
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="mention" title="Mention" tabindex="-1">
+                                    @
+                                </button>
+                                <div class="toolbar-divider"></div>
+                                <button type="button" class="toolbar-btn" data-action="save-load" title="Save/Load" tabindex="-1">
+                                    💾
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="slash" title="Slash Commands" tabindex="-1">
+                                    /
+                                </button>
+                                <button type="button" class="toolbar-btn" data-action="full-editor" title="Full Editor" tabindex="-1">
+                                    ⛶
+                                </button>
+                            </div>
+                            
+                            <!-- Editor Content -->
+                            <div class="editor-content">
+                                <div class="editor-pane write-pane active">
+                                    <textarea id="description" name="description" rows="6" placeholder="Additional details about the activity...&#10;&#10;You can use **Markdown** formatting:&#10;- **Bold text**&#10;- *Italic text*&#10;- [Links](https://example.com)&#10;- Lists and more!&#10;&#10;Use slash commands for LaTeX: /math, /equation"></textarea>
+                                </div>
+                                <div class="editor-pane preview-pane">
+                                    <div id="description-preview" class="markdown-preview">
+                                        <p class="preview-placeholder">Nothing to preview</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit">Create Room</button>
