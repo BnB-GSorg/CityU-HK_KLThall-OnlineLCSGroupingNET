@@ -22,45 +22,53 @@ const roomModal = document.getElementById('room-modal');
 const closeModal = document.querySelector('.close');
 const activityFilter = document.getElementById('activity-filter');
 
+// Utility functions for dynamic date generation
+function getTomorrowDate() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+}
+
+function getDayAfterTomorrowDate() {
+    const dayAfterTomorrow = new Date();
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    return dayAfterTomorrow.toISOString().split('T')[0];
+}
+
 // Sample data for demonstration
-const sampleRooms = [
-    {
-        id: 1,
-        name: "Chess Tournament",
-        type: "board-games",
-        host: "Alice Wang",
-        location: "Library Study Room 301",
-        date: (() => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            return tomorrow.toISOString().split('T')[0];
-        })(),
-        time: "14:00",
-        maxParticipants: 8,
-        participants: ["Alice Wang", "Bob Chen"],
-        description: "Friendly chess tournament for all skill levels!"
-    },
-    {
-        id: 2,
-        name: "Basketball Pickup Game",
-        type: "sports",
-        host: "Mike Liu",
-        location: "CityU Sports Complex Court 2",
-        date: (() => {
-            const dayAfterTomorrow = new Date();
-            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-            return dayAfterTomorrow.toISOString().split('T')[0];
-        })(),
-        time: "16:30",
-        maxParticipants: 10,
-        participants: ["Mike Liu", "Sarah Wong", "David Lee"],
-        description: "Casual basketball game, all levels welcome!"
-    }
-];
+function createSampleRooms() {
+    return [
+        {
+            id: 1,
+            name: "Chess Tournament",
+            type: "board-games",
+            host: "Alice Wang",
+            location: "Library Study Room 301",
+            date: getTomorrowDate(),
+            time: "14:00",
+            maxParticipants: 8,
+            participants: ["Alice Wang", "Bob Chen"],
+            description: "Friendly chess tournament for all skill levels!"
+        },
+        {
+            id: 2,
+            name: "Basketball Pickup Game",
+            type: "sports",
+            host: "Mike Liu",
+            location: "CityU Sports Complex Court 2",
+            date: getDayAfterTomorrowDate(),
+            time: "16:30",
+            maxParticipants: 10,
+            participants: ["Mike Liu", "Sarah Wong", "David Lee"],
+            description: "Casual basketball game, all levels welcome!"
+        }
+    ];
+}
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Load sample data
+    // Load sample data with dynamic dates
+    const sampleRooms = createSampleRooms();
     rooms = [...sampleRooms];
     nextRoomId = Math.max(...rooms.map(r => r.id)) + 1;
     
@@ -145,12 +153,10 @@ function showCreateRoomForm() {
     createRoomForm.classList.remove('hidden');
     hideRoomsList();
     
-    // Set default date to tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Set default date to tomorrow using the same utility function
     const dateInput = document.getElementById('date');
     if (dateInput && !dateInput.value) {
-        dateInput.value = tomorrow.toISOString().split('T')[0];
+        dateInput.value = getTomorrowDate();
     }
 }
 
