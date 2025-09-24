@@ -3,33 +3,14 @@ let currentUser = null;
 let rooms = [];
 let nextRoomId = 1;
 
-// DOM Elements
-const loginSection = document.getElementById('login-section');
-const dashboardSection = document.getElementById('dashboard-section');
-const loginBtn = document.getElementById('login-btn');
-const logoutBtn = document.getElementById('logout-btn');
-const loginForm = document.getElementById('login-form');
-const userDisplay = document.getElementById('user-display');
+// DOM Elements - will be initialized when DOM is ready
+let loginSection, dashboardSection, loginBtn, logoutBtn, loginForm, userDisplay;
+let createRoomBtn, browseRoomsBtn, createRoomForm, roomForm, cancelCreateBtn;
+let roomsGrid, roomModal, closeModal;
+let notificationArea, toastContainer, confirmationModal, confirmationTitle, confirmationMessage, confirmationConfirm, confirmationCancel, activityFilter;
 
-const createRoomBtn = document.getElementById('create-room-btn');
-const browseRoomsBtn = document.getElementById('browse-rooms-btn');
-const createRoomForm = document.getElementById('create-room-form');
-const roomForm = document.getElementById('room-form');
-const cancelCreateBtn = document.getElementById('cancel-create');
-
-const roomsGrid = document.getElementById('rooms-grid');
-const roomModal = document.getElementById('room-modal');
-const closeModal = document.querySelector('.close');
-
-// Accessibility elements
-const notificationArea = document.getElementById('notification-area');
-const toastContainer = document.getElementById('toast-container');
-const confirmationModal = document.getElementById('confirmation-modal');
-const confirmationTitle = document.getElementById('confirmation-title');
-const confirmationMessage = document.getElementById('confirmation-message');
-const confirmationConfirm = document.getElementById('confirmation-confirm');
-const confirmationCancel = document.getElementById('confirmation-cancel');
-const activityFilter = document.getElementById('activity-filter');
+// Make variables globally accessible for debugging
+window.currentUser = currentUser;
 
 // Sample data for demonstration
 const sampleRooms = [
@@ -39,7 +20,6 @@ const sampleRooms = [
         type: "board-games",
         host: "Alice Wang",
         location: "Library Study Room 301",
-        date: "2024-12-20",
         date: (() => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -165,6 +145,38 @@ function hideConfirmation() {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DOM elements
+    loginSection = document.getElementById('login-section');
+    dashboardSection = document.getElementById('dashboard-section');
+    loginBtn = document.getElementById('login-btn');
+    logoutBtn = document.getElementById('logout-btn');
+    loginForm = document.getElementById('login-form');
+    userDisplay = document.getElementById('user-display');
+    
+    createRoomBtn = document.getElementById('create-room-btn');
+    browseRoomsBtn = document.getElementById('browse-rooms-btn');
+    createRoomForm = document.getElementById('create-room-form');
+    roomForm = document.getElementById('room-form');
+    cancelCreateBtn = document.getElementById('cancel-create');
+    
+    roomsGrid = document.getElementById('rooms-grid');
+    roomModal = document.getElementById('room-modal');
+    closeModal = document.querySelector('.close');
+    
+    // Accessibility elements
+    notificationArea = document.getElementById('notification-area');
+    toastContainer = document.getElementById('toast-container');
+    confirmationModal = document.getElementById('confirmation-modal');
+    confirmationTitle = document.getElementById('confirmation-title');
+    confirmationMessage = document.getElementById('confirmation-message');
+    confirmationConfirm = document.getElementById('confirmation-confirm');
+    confirmationCancel = document.getElementById('confirmation-cancel');
+    activityFilter = document.getElementById('activity-filter');
+    
+    // Make DOM elements globally accessible for debugging
+    window.loginForm = loginForm;
+    window.currentUser = currentUser;
+    
     // Load sample data
     rooms = [...sampleRooms];
     nextRoomId = Math.max(...rooms.map(r => r.id)) + 1;
@@ -205,9 +217,6 @@ function setupEventListeners() {
     
     // Modal backdrop click
     roomModal.addEventListener('click', function(event) {
-    // Modal
-    closeModal.addEventListener('click', hideRoomModal);
-    window.addEventListener('click', function(event) {
         if (event.target === roomModal) {
             hideRoomModal();
         }
@@ -443,11 +452,6 @@ function showRoomDetails(room) {
             actionButton = `<button class="leave-btn" data-action="leave-room" data-room-id="${room.id}">Leave Room</button>`;
         } else if (!isFull) {
             actionButton = `<button class="join-btn" data-action="join-room" data-room-id="${room.id}">Join Room</button>`;
-            actionButton = '<button class="leave-btn" onclick="deleteRoom(' + room.id + ')">Delete Room</button>';
-        } else if (isParticipant) {
-            actionButton = '<button class="leave-btn" onclick="leaveRoom(' + room.id + ')">Leave Room</button>';
-        } else if (!isFull) {
-            actionButton = '<button class="join-btn" onclick="joinRoom(' + room.id + ')">Join Room</button>';
         }
     }
     
@@ -467,20 +471,6 @@ function showRoomDetails(room) {
             <div class="room-info"><strong>Time:</strong> ${formatTime(room.time)}</div>
             <div class="room-info"><strong>Max Participants:</strong> ${room.maxParticipants}</div>
             ${room.description ? '<div class="room-info"><strong>Description:</strong> ' + escapeHtml(room.description) + '</div>' : ''}
-        return `<div class="participant ${isRoomHost ? 'host' : ''}">${participant}${isRoomHost ? ' (Host)' : ''}</div>`;
-    }).join('');
-    
-    document.getElementById('room-details').innerHTML = `
-        <h3>${room.name}</h3>
-        <span class="activity-type">${formatActivityType(room.type)}</span>
-        
-        <div style="margin: 1.5rem 0;">
-            <div class="room-info"><strong>Host:</strong> ${room.host}</div>
-            <div class="room-info"><strong>Location:</strong> ${room.location}</div>
-            <div class="room-info"><strong>Date:</strong> ${formatDate(room.date)}</div>
-            <div class="room-info"><strong>Time:</strong> ${formatTime(room.time)}</div>
-            <div class="room-info"><strong>Max Participants:</strong> ${room.maxParticipants}</div>
-            ${room.description ? '<div class="room-info"><strong>Description:</strong> ' + room.description + '</div>' : ''}
         </div>
         
         <div class="participants-list">
@@ -500,12 +490,9 @@ function hideRoomModal() {
     roomModal.classList.add('hidden');
 }
 
-async function joinRoom(roomId) {
-    if (!currentUser) {
-        showNotification('Please login first', 'warning');
 function joinRoom(roomId) {
     if (!currentUser) {
-        alert('Please login first');
+        showNotification('Please login first', 'warning');
         return;
     }
     
@@ -515,11 +502,6 @@ function joinRoom(roomId) {
         displayRooms();
         showRoomDetails(room);
         showNotification('Successfully joined the room!', 'success');
-    }
-}
-
-async function leaveRoom(roomId) {
-        alert('Successfully joined the room!');
     }
 }
 
@@ -536,18 +518,6 @@ function leaveRoom(roomId) {
     }
 }
 
-async function deleteRoom(roomId) {
-    const confirmed = await showConfirmation(
-        'Delete Room',
-        'Are you sure you want to delete this room? This action cannot be undone.'
-    );
-    
-    if (confirmed) {
-            alert('You have left the room.');
-        }
-    }
-}
-
 function deleteRoom(roomId) {
     if (confirm('Are you sure you want to delete this room?')) {
         const index = rooms.findIndex(r => r.id === roomId);
@@ -556,11 +526,6 @@ function deleteRoom(roomId) {
             displayRooms();
             hideRoomModal();
             showNotification('Room deleted successfully.', 'success');
-        }
-    }
-}
-
-            alert('Room deleted successfully.');
         }
     }
 }
