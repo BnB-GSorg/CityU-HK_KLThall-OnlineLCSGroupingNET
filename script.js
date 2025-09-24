@@ -20,6 +20,15 @@ const cancelCreateBtn = document.getElementById('cancel-create');
 const roomsGrid = document.getElementById('rooms-grid');
 const roomModal = document.getElementById('room-modal');
 const closeModal = document.querySelector('.close');
+
+// Accessibility elements
+const notificationArea = document.getElementById('notification-area');
+const toastContainer = document.getElementById('toast-container');
+const confirmationModal = document.getElementById('confirmation-modal');
+const confirmationTitle = document.getElementById('confirmation-title');
+const confirmationMessage = document.getElementById('confirmation-message');
+const confirmationConfirm = document.getElementById('confirmation-confirm');
+const confirmationCancel = document.getElementById('confirmation-cancel');
 const activityFilter = document.getElementById('activity-filter');
 
 // Sample data for demonstration
@@ -30,6 +39,7 @@ const sampleRooms = [
         type: "board-games",
         host: "Alice Wang",
         location: "Library Study Room 301",
+        date: "2024-12-20",
         date: (() => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -38,7 +48,7 @@ const sampleRooms = [
         time: "14:00",
         maxParticipants: 8,
         participants: ["Alice Wang", "Bob Chen"],
-        description: "Friendly chess tournament for all skill levels!"
+        description: "(Test) Friendly chess tournament for all skill levels!"
     },
     {
         id: 2,
@@ -46,17 +56,112 @@ const sampleRooms = [
         type: "sports",
         host: "Mike Liu",
         location: "CityU Sports Complex Court 2",
-        date: (() => {
-            const dayAfterTomorrow = new Date();
-            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-            return dayAfterTomorrow.toISOString().split('T')[0];
-        })(),
+        date: "2024-12-21",
         time: "16:30",
         maxParticipants: 10,
         participants: ["Mike Liu", "Sarah Wong", "David Lee"],
-        description: "Casual basketball game, all levels welcome!"
+        description: "(Test) Casual basketball game, all levels welcome!"
     }
 ];
+
+// Notification System - Accessible replacement for alert()
+function showNotification(message, type = 'info', duration = 5000) {
+    // Update ARIA live region for screen readers
+    notificationArea.textContent = message;
+    
+    // Create visual toast notification
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Close notification');
+    closeBtn.addEventListener('click', () => removeToast(toast));
+    
+    toast.appendChild(messageSpan);
+    toast.appendChild(closeBtn);
+    
+    toastContainer.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Auto-remove after duration
+    setTimeout(() => removeToast(toast), duration);
+    
+    return toast;
+}
+
+function removeToast(toast) {
+    if (toast && toast.parentNode) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+}
+
+// Store current confirmation handlers
+let currentConfirmationHandlers = null;
+
+// Accessible confirmation dialog - replacement for confirm()
+function showConfirmation(title, message) {
+    return new Promise((resolve) => {
+        confirmationTitle.textContent = title;
+        confirmationMessage.textContent = message;
+        
+        const handleConfirm = () => {
+            hideConfirmation();
+            resolve(true);
+        };
+        
+        const handleCancel = () => {
+            hideConfirmation();
+            resolve(false);
+        };
+        
+        const handleKeydown = (event) => {
+            if (event.key === 'Escape') {
+                handleCancel();
+            }
+        };
+        
+        // Store handlers for cleanup
+        currentConfirmationHandlers = {
+            confirm: handleConfirm,
+            cancel: handleCancel,
+            keydown: handleKeydown
+        };
+        
+        // Add event listeners
+        confirmationConfirm.addEventListener('click', handleConfirm);
+        confirmationCancel.addEventListener('click', handleCancel);
+        document.addEventListener('keydown', handleKeydown);
+        
+        confirmationModal.classList.remove('hidden');
+        confirmationConfirm.focus(); // Focus on confirm button by default
+    });
+}
+
+function hideConfirmation() {
+    confirmationModal.classList.add('hidden');
+    
+    // Clean up event listeners
+    if (currentConfirmationHandlers) {
+        confirmationConfirm.removeEventListener('click', currentConfirmationHandlers.confirm);
+        confirmationCancel.removeEventListener('click', currentConfirmationHandlers.cancel);
+        document.removeEventListener('keydown', currentConfirmationHandlers.keydown);
+        currentConfirmationHandlers = null;
+    }
+}
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -88,7 +193,18 @@ function setupEventListeners() {
     browseRoomsBtn.addEventListener('click', showRoomsList);
     roomForm.addEventListener('submit', handleCreateRoom);
     cancelCreateBtn.addEventListener('click', hideCreateRoomForm);
+
+    // Modal event listeners using proper event delegation
+    closeModal.addEventListener('click', hideRoomModal);
+    closeModal.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            hideRoomModal();
+        }
+    });
     
+    // Modal backdrop click
+    roomModal.addEventListener('click', function(event) {
     // Modal
     closeModal.addEventListener('click', hideRoomModal);
     window.addEventListener('click', function(event) {
@@ -96,7 +212,70 @@ function setupEventListeners() {
             hideRoomModal();
         }
     });
+
+    // Confirmation modal backdrop click
+    confirmationModal.addEventListener('click', function(event) {
+        if (event.target === confirmationModal) {
+            hideConfirmation();
+        }
+    });
     
+    // Escape key to close modals
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            if (!roomModal.classList.contains('hidden')) {
+                hideRoomModal();
+            }
+            if (!confirmationModal.classList.contains('hidden')) {
+                hideConfirmation();
+            }
+        }
+    });
+    
+    // Event delegation for dynamically created room buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.hasAttribute('data-action')) {
+            const action = event.target.getAttribute('data-action');
+            const roomId = parseInt(event.target.getAttribute('data-room-id'));
+            
+            switch (action) {
+                case 'join-room':
+                    joinRoom(roomId);
+                    break;
+                case 'leave-room':
+                    leaveRoom(roomId);
+                    break;
+                case 'delete-room':
+                    deleteRoom(roomId);
+                    break;
+            }
+        }
+    });
+    
+    // Event delegation for room cards
+    document.addEventListener('click', function(event) {
+        const roomCard = event.target.closest('.room-card');
+        if (roomCard && roomCard.hasAttribute('data-room-id')) {
+            const roomId = parseInt(roomCard.getAttribute('data-room-id'));
+            const room = rooms.find(r => r.id === roomId);
+            if (room) {
+                showRoomDetails(room);
+            }
+        }
+    });
+    
+    // Keyboard navigation for room cards
+    document.addEventListener('keydown', function(event) {
+        const roomCard = event.target.closest('.room-card');
+        if (roomCard && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            const roomId = parseInt(roomCard.getAttribute('data-room-id'));
+            const room = rooms.find(r => r.id === roomId);
+            if (room) {
+                showRoomDetails(room);
+            }
+        }
+    });
     // Filter
     activityFilter.addEventListener('change', handleFilterChange);
 }
@@ -111,6 +290,7 @@ function handleLogin(event) {
         currentUser = { username, email };
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         showDashboard();
+        showNotification(`Welcome, ${username}!`, 'success');
     }
 }
 
@@ -121,6 +301,7 @@ function handleLogout() {
     // Reset forms
     loginForm.reset();
     roomForm.reset();
+    showNotification('You have been logged out.', 'info');
 }
 
 function showLogin() {
@@ -189,7 +370,8 @@ function handleCreateRoom(event) {
     hideCreateRoomForm();
     displayRooms();
     
-    alert('Room created successfully!');
+    // Accessible notification instead of alert()
+    showNotification('Room created successfully!', 'success');
 }
 
 function displayRooms(filter = 'all') {
@@ -218,6 +400,10 @@ function displayRooms(filter = 'all') {
 function createRoomCard(room) {
     const card = document.createElement('div');
     card.className = 'room-card';
+    card.setAttribute('data-room-id', room.id);
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `View details for ${room.name}`);
     card.addEventListener('click', () => showRoomDetails(room));
     
     const isHost = currentUser && room.host === currentUser.username;
@@ -225,6 +411,10 @@ function createRoomCard(room) {
     const isFull = room.participants.length >= room.maxParticipants;
     
     card.innerHTML = `
+        <h4>${escapeHtml(room.name)}</h4>
+        <span class="activity-type">${formatActivityType(room.type)}</span>
+        <div class="room-info"><strong>Host:</strong> ${escapeHtml(room.host)}</div>
+        <div class="room-info"><strong>Location:</strong> ${escapeHtml(room.location)}</div>
         <h4>${room.name}</h4>
         <span class="activity-type">${formatActivityType(room.type)}</span>
         <div class="room-info"><strong>Host:</strong> ${room.host}</div>
@@ -248,6 +438,11 @@ function showRoomDetails(room) {
     let actionButton = '';
     if (currentUser) {
         if (isHost) {
+            actionButton = `<button class="leave-btn" data-action="delete-room" data-room-id="${room.id}">Delete Room</button>`;
+        } else if (isParticipant) {
+            actionButton = `<button class="leave-btn" data-action="leave-room" data-room-id="${room.id}">Leave Room</button>`;
+        } else if (!isFull) {
+            actionButton = `<button class="join-btn" data-action="join-room" data-room-id="${room.id}">Join Room</button>`;
             actionButton = '<button class="leave-btn" onclick="deleteRoom(' + room.id + ')">Delete Room</button>';
         } else if (isParticipant) {
             actionButton = '<button class="leave-btn" onclick="leaveRoom(' + room.id + ')">Leave Room</button>';
@@ -258,6 +453,20 @@ function showRoomDetails(room) {
     
     const participantsList = room.participants.map(participant => {
         const isRoomHost = participant === room.host;
+        return `<div class="participant ${isRoomHost ? 'host' : ''}">${escapeHtml(participant)}${isRoomHost ? ' (Host)' : ''}</div>`;
+    }).join('');
+    
+    document.getElementById('room-details').innerHTML = `
+        <h3 id="room-modal-title">${escapeHtml(room.name)}</h3>
+        <span class="activity-type">${formatActivityType(room.type)}</span>
+        
+        <div style="margin: 1.5rem 0;" id="room-modal-description">
+            <div class="room-info"><strong>Host:</strong> ${escapeHtml(room.host)}</div>
+            <div class="room-info"><strong>Location:</strong> ${escapeHtml(room.location)}</div>
+            <div class="room-info"><strong>Date:</strong> ${formatDate(room.date)}</div>
+            <div class="room-info"><strong>Time:</strong> ${formatTime(room.time)}</div>
+            <div class="room-info"><strong>Max Participants:</strong> ${room.maxParticipants}</div>
+            ${room.description ? '<div class="room-info"><strong>Description:</strong> ' + escapeHtml(room.description) + '</div>' : ''}
         return `<div class="participant ${isRoomHost ? 'host' : ''}">${participant}${isRoomHost ? ' (Host)' : ''}</div>`;
     }).join('');
     
@@ -283,12 +492,17 @@ function showRoomDetails(room) {
     `;
     
     roomModal.classList.remove('hidden');
+    // Focus on close button for accessibility
+    closeModal.focus();
 }
 
 function hideRoomModal() {
     roomModal.classList.add('hidden');
 }
 
+async function joinRoom(roomId) {
+    if (!currentUser) {
+        showNotification('Please login first', 'warning');
 function joinRoom(roomId) {
     if (!currentUser) {
         alert('Please login first');
@@ -300,6 +514,11 @@ function joinRoom(roomId) {
         room.participants.push(currentUser.username);
         displayRooms();
         showRoomDetails(room);
+        showNotification('Successfully joined the room!', 'success');
+    }
+}
+
+async function leaveRoom(roomId) {
         alert('Successfully joined the room!');
     }
 }
@@ -312,6 +531,18 @@ function leaveRoom(roomId) {
             room.participants.splice(index, 1);
             displayRooms();
             hideRoomModal();
+            showNotification('You have left the room.', 'info');
+        }
+    }
+}
+
+async function deleteRoom(roomId) {
+    const confirmed = await showConfirmation(
+        'Delete Room',
+        'Are you sure you want to delete this room? This action cannot be undone.'
+    );
+    
+    if (confirmed) {
             alert('You have left the room.');
         }
     }
@@ -324,6 +555,11 @@ function deleteRoom(roomId) {
             rooms.splice(index, 1);
             displayRooms();
             hideRoomModal();
+            showNotification('Room deleted successfully.', 'success');
+        }
+    }
+}
+
             alert('Room deleted successfully.');
         }
     }
@@ -368,6 +604,17 @@ function formatTime(timeStr) {
     });
 }
 
+// Security utility function to prevent XSS
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
 // Enhanced Markdown Editor functionality
 class SimpleMarkdownParser {
     static parse(markdown) {
