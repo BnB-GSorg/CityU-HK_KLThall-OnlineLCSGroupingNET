@@ -374,18 +374,6 @@ function handleCreateRoom(event) {
     showNotification('Room created successfully!', 'success');
 }
 
-function displayRooms() {
-    roomsGrid.innerHTML = '';
-    
-    if (rooms.length === 0) {
-        roomsGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: #666;">No rooms available. Create one!</p>';
-        return;
-    }
-    
-    rooms.forEach(room => {
-    alert('Room created successfully!');
-}
-
 function displayRooms(filter = 'all') {
     roomsGrid.innerHTML = '';
     
