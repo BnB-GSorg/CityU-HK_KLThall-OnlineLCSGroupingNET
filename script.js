@@ -175,7 +175,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make DOM elements globally accessible for debugging
     window.loginForm = loginForm;
-    window.currentUser = currentUser;
     
     // Load sample data
     rooms = [...sampleRooms];
